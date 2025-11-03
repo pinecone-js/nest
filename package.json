@@ -1,6 +1,6 @@
 {
     "name": "@pinecone-js/nest",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "description": "PineconeJS — NestJS extensions that keep devs focused on business logic",
     "license": "MIT",
     "type": "module",

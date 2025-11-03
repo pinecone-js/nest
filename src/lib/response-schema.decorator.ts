@@ -25,10 +25,12 @@ class EnsureResponseInterceptor<T extends z.ZodTypeAny> {
 
   intercept(_ctx: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map((output: HttpResponse<any>) => {
+      map((output: any) => {
         try {
-          if (output.data) {
+          if (output.data && output.code === 'OK') {
             output.data = this.schema.parse(output.data);
+          } else {
+            output = this.schema.parse(output);
           }
 
           return output;

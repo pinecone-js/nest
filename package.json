@@ -4,7 +4,7 @@
     "description": "PineconeJS — NestJS extensions that keep devs focused on business logic",
     "license": "MIT",
     "type": "module",
-    "main": "dist/index.cjs",
+    "main": "dist/index.js",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {

@@ -10,8 +10,7 @@
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
+            "import": "./dist/index.js"
         }
     },
     "files": [
@@ -20,7 +19,7 @@
         "LICENSE"
     ],
     "engines": {
-        "node": ">=20"
+        "node": ">=18"
     },
     "peerDependencies": {
         "@nestjs/common": ">=10.0.0",

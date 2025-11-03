@@ -62,8 +62,11 @@ let EnsureResponseInterceptor = (() => {
         intercept(_ctx, next) {
             return next.handle().pipe(map((output) => {
                 try {
-                    if (output.data) {
+                    if (output.data && output.code === 'OK') {
                         output.data = this.schema.parse(output.data);
+                    }
+                    else {
+                        output = this.schema.parse(output);
                     }
                     return output;
                 }

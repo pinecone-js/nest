@@ -32,7 +32,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { Injectable, UseInterceptors, applyDecorators, } from "@nestjs/common";
+import { HttpStatus, Injectable, UseInterceptors, applyDecorators, } from "@nestjs/common";
 import { map } from "rxjs/operators";
 export class ResponseSchemaException extends Error {
     constructor(message) {
@@ -80,6 +80,42 @@ let EnsureResponseInterceptor = (() => {
     };
     return EnsureResponseInterceptor = _classThis;
 })();
+let FinalizeResponseInterceptor = (() => {
+    let _classDecorators = [Injectable()];
+    let _classDescriptor;
+    let _classExtraInitializers = [];
+    let _classThis;
+    var FinalizeResponseInterceptor = class {
+        static { _classThis = this; }
+        static {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            FinalizeResponseInterceptor = _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        }
+        intercept(context, next) {
+            const response = context.switchToHttp().getResponse();
+            return next.handle().pipe(map((output) => {
+                if (output.code !== undefined && output.data) {
+                    if (output.code === "OK") {
+                        response.status(HttpStatus.OK);
+                    }
+                    else if (output.code.startsWith("INTERNAL_")) {
+                        response.status(HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                    else {
+                        response.status(HttpStatus.BAD_REQUEST);
+                    }
+                    return output;
+                }
+                return output;
+            }));
+        }
+    };
+    return FinalizeResponseInterceptor = _classThis;
+})();
+export { FinalizeResponseInterceptor };
 /**
  * Method decorator:
  * - Accepts a Zod schema
@@ -90,7 +126,7 @@ export function ResponseSchema(schema, options) {
     const opts = {
         strict: options?.strict ?? false,
     };
-    return applyDecorators(UseInterceptors(new EnsureResponseInterceptor(schema, opts)));
+    return applyDecorators(UseInterceptors(new EnsureResponseInterceptor(schema, opts)), UseInterceptors(new FinalizeResponseInterceptor()));
 }
 // Alias for ResponseSchema
 export const OutputData = ResponseSchema;

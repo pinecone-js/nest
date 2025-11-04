@@ -27,7 +27,6 @@ class EnsureResponseInterceptor<T extends z.ZodTypeAny> {
   intercept(_ctx: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       map((output: any) => {
-        console.log('output:::::::::::111111', output);
         try {
           if (output.data) {
             if (output.code === "OK") {

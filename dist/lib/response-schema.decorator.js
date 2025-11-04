@@ -61,7 +61,6 @@ let EnsureResponseInterceptor = (() => {
         }
         intercept(_ctx, next) {
             return next.handle().pipe(map((output) => {
-                console.log('output:::::::::::111111', output);
                 try {
                     if (output.data) {
                         if (output.code === "OK") {

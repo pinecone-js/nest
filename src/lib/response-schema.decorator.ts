@@ -1,7 +1,9 @@
 import {
   CallHandler,
   ExecutionContext,
+  HttpStatus,
   Injectable,
+  NestInterceptor,
   UseInterceptors,
   applyDecorators,
 } from "@nestjs/common";
@@ -47,6 +49,30 @@ interface ResponseSchemaOptions {
   strict?: boolean;
 }
 
+@Injectable()
+export class FinalizeResponseInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const response = context.switchToHttp().getResponse();
+
+    return next.handle().pipe(
+      map((output: any) => {
+        if (output.code !== undefined && output.data) {
+          if (output.code === "OK") {
+            response.status(HttpStatus.OK);
+          } else if (output.code.startsWith("INTERNAL_")) {
+            response.status(HttpStatus.INTERNAL_SERVER_ERROR);
+          } else {
+            response.status(HttpStatus.BAD_REQUEST);
+          }
+          return output;
+        }
+
+        return output;
+      })
+    );
+  }
+}
+
 /**
  * Method decorator:
  * - Accepts a Zod schema
@@ -61,7 +87,8 @@ export function ResponseSchema<T extends z.ZodTypeAny>(
     strict: options?.strict ?? false,
   };
   return applyDecorators(
-    UseInterceptors(new EnsureResponseInterceptor(schema, opts))
+    UseInterceptors(new EnsureResponseInterceptor(schema, opts)),
+    UseInterceptors(new FinalizeResponseInterceptor())
   );
 }
 

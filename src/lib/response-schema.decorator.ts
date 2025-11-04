@@ -8,7 +8,6 @@ import {
 import { Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import { z } from "zod";
-import { HttpResponse } from "./http-result";
 
 export class ResponseSchemaException extends Error {
   constructor(message: string) {
@@ -27,10 +26,12 @@ class EnsureResponseInterceptor<T extends z.ZodTypeAny> {
     return next.handle().pipe(
       map((output: any) => {
         try {
-          if (output.data && output.code === 'OK') {
-            output.data = this.schema.parse(output.data);
-          } else {
-            output = this.schema.parse(output);
+          if (output.data) {
+            if (output.code === "OK") {
+              output.data = this.schema.parse(output.data);
+            } else {
+              output = this.schema.parse(output);
+            }
           }
 
           return output;

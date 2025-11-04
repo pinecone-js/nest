@@ -27,12 +27,14 @@ class EnsureResponseInterceptor<T extends z.ZodTypeAny> {
   intercept(_ctx: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       map((output: any) => {
+        console.log('output:::::::::::111111', output);
         try {
           if (output.data) {
             if (output.code === "OK") {
               output.data = this.schema.parse(output.data);
             } else {
-              output = this.schema.parse(output);
+              // Do not parse the output if it is not OK. Because we does not support parsing the error response.
+              // output = this.schema.parse(output);
             }
           }
 
@@ -56,17 +58,20 @@ export class FinalizeResponseInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       map((output: any) => {
-        if (output.code !== undefined && output.data) {
+        let statusCode = HttpStatus.OK;
+        const isHttpResponse = output.code !== undefined && (output.data || output.message);
+
+        if (isHttpResponse) {
           if (output.code === "OK") {
-            response.status(HttpStatus.OK);
+            statusCode = HttpStatus.OK;
           } else if (output.code.startsWith("INTERNAL_")) {
-            response.status(HttpStatus.INTERNAL_SERVER_ERROR);
+            statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
           } else {
-            response.status(HttpStatus.BAD_REQUEST);
+            statusCode = HttpStatus.BAD_REQUEST;
           }
-          return output;
         }
 
+        response.status(statusCode);
         return output;
       })
     );
@@ -88,7 +93,7 @@ export function ResponseSchema<T extends z.ZodTypeAny>(
   };
   return applyDecorators(
     UseInterceptors(new EnsureResponseInterceptor(schema, opts)),
-    UseInterceptors(new FinalizeResponseInterceptor())
+    UseInterceptors(FinalizeResponseInterceptor)
   );
 }
 

@@ -8,18 +8,18 @@ interface Rejection {
     message: string;
     data?: unknown;
 }
-interface Error {
-    kind: "error";
+interface InfraError {
+    kind: "infra-error";
     serviceName: string;
     errorCode: string;
     message: string;
     data?: unknown;
 }
-export type Result<T> = Ok<T> | Rejection | Error;
+export type Result<T> = Ok<T> | Rejection | InfraError;
 type ErrorCode = string;
 export declare class AppResult {
     static ok<T>(data: T): Result<T>;
     static reject(code: ErrorCode, message: string, data?: unknown): Result<any>;
-    static error(serviceName: string, errorCode: ErrorCode, message: string, data?: unknown): Result<any>;
+    static infraError(serviceName: string, errorCode: ErrorCode, message: string, data?: unknown): Result<any>;
 }
 export {};

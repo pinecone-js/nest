@@ -20,7 +20,7 @@ export class HttpResult {
                 // ✋ Hey dev! This is the business logic error
                 // => Send clear error message to the Client
                 return this.fail(result.code, result.message, result.data);
-            case 'error':
+            case 'infra-error':
                 // 👉 This is the infrastructure error
                 // => Send generic error message to the Client and log the error and alert the Team
                 return this.fail('INTERNAL_ERROR', 'Something went wrong while processing your request. ' +

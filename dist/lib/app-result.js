@@ -5,8 +5,8 @@ export class AppResult {
     static reject(code, message, data) {
         return { kind: "reject", code, message, data };
     }
-    static error(serviceName, errorCode, message, data) {
-        return { kind: "error", serviceName, errorCode, message, data };
+    static infraError(serviceName, errorCode, message, data) {
+        return { kind: "infra-error", serviceName, errorCode, message, data };
     }
 }
 AppResult.reject('CONFLICT', 'Unauthorized');

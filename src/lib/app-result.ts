@@ -10,15 +10,15 @@ interface Rejection {
   data?: unknown;
 }
 
-interface Error {
-  kind: "error";
+interface InfraError {
+  kind: "infra-error";
   serviceName: string;
   errorCode: string;
   message: string;
   data?: unknown;
 }
 
-export type Result<T> = Ok<T> | Rejection | Error;
+export type Result<T> = Ok<T> | Rejection | InfraError;
 
 type ErrorCode = string;
 
@@ -31,13 +31,13 @@ export class AppResult {
     return { kind: "reject", code, message, data };
   }
 
-  static error(
+  static infraError(
     serviceName: string,
     errorCode: ErrorCode,
     message: string,
     data?: unknown
   ): Result<any> {
-    return { kind: "error", serviceName, errorCode, message, data };
+    return { kind: "infra-error", serviceName, errorCode, message, data };
   }
 }
 

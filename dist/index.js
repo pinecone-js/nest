@@ -7638,7 +7638,7 @@ function collectFromRequest(req, keys, opts) {
   }
   return opts.coercePrimitives ? shallowCoerce(merged) : merged;
 }
-function RequestSchema(schema, options) {
+function AcceptInput(schema, options) {
   const opts = {
     sourceOrder: options?.sourceOrder ?? ["params", "query", "body", "headers"],
     strategy: options?.strategy ?? "firstWins",
@@ -7682,7 +7682,6 @@ function RequestSchema(schema, options) {
   );
   return decoratorFactory();
 }
-var InputData = RequestSchema;
 
 // src/messaging/response-schema.decorator.ts
 var import_operators = __toESM(require_operators());
@@ -7746,7 +7745,7 @@ var FinalizeResponseInterceptor = class {
 _init2 = __decoratorStart();
 FinalizeResponseInterceptor = __decorateElement(_init2, 0, "FinalizeResponseInterceptor", _FinalizeResponseInterceptor_decorators, FinalizeResponseInterceptor);
 __runInitializers(_init2, 1, FinalizeResponseInterceptor);
-function ResponseSchema(schema, options) {
+function EnsureOutput(schema, options) {
   const opts = {
     strict: options?.strict ?? false
   };
@@ -7755,7 +7754,6 @@ function ResponseSchema(schema, options) {
     UseInterceptors(FinalizeResponseInterceptor)
   );
 }
-var OutputData = ResponseSchema;
 
 // src/messaging/app-result.ts
 var AppResult = class {
@@ -7801,6 +7799,6 @@ var HttpResult = class {
   }
 };
 
-export { AppResult, FinalizeResponseInterceptor, HttpResult, InputData, OutputData, RequestSchema, ResponseSchema, ResponseSchemaException };
+export { AcceptInput, AppResult, EnsureOutput, HttpResult, ResponseSchemaException };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

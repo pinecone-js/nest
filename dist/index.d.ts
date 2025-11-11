@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import { NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
-import { Observable } from 'rxjs';
 
 type Source = "params" | "query" | "body" | "headers";
 type AcceptInputOptions = {
@@ -15,8 +13,7 @@ type AcceptInputOptions = {
  * Usage in handler:
  *    handler(@AcceptInput(MySchema) input: z.infer<typeof MySchema>) {}
  */
-declare function RequestSchema<T extends z.ZodTypeAny>(schema: T, options?: AcceptInputOptions): ParameterDecorator;
-declare const InputData: typeof RequestSchema;
+declare function AcceptInput<T extends z.ZodTypeAny>(schema: T, options?: AcceptInputOptions): ParameterDecorator;
 
 declare class ResponseSchemaException extends Error {
     constructor(message: string);
@@ -24,17 +21,13 @@ declare class ResponseSchemaException extends Error {
 interface ResponseSchemaOptions {
     strict?: boolean;
 }
-declare class FinalizeResponseInterceptor implements NestInterceptor {
-    intercept(context: ExecutionContext, next: CallHandler): Observable<any>;
-}
 /**
  * Method decorator:
  * - Accepts a Zod schema
  * - Before sending the response, strips any fields not defined in the schema
  * - Applies Zod default()/transform() on the output
  */
-declare function ResponseSchema<T extends z.ZodTypeAny>(schema: T, options?: ResponseSchemaOptions): MethodDecorator;
-declare const OutputData: typeof ResponseSchema;
+declare function EnsureOutput<T extends z.ZodTypeAny>(schema: T, options?: ResponseSchemaOptions): MethodDecorator;
 
 interface Ok<T> {
     kind: "ok";
@@ -72,4 +65,4 @@ declare class HttpResult {
     static fromResult<T extends unknown>(result: Result<T>, presenter?: (data: any) => any): HttpResponse<T>;
 }
 
-export { type AcceptInputOptions, AppResult, FinalizeResponseInterceptor, type HttpResponse, HttpResult, InputData, OutputData, RequestSchema, ResponseSchema, ResponseSchemaException, type Result };
+export { AcceptInput, AppResult, EnsureOutput, type HttpResponse, HttpResult, ResponseSchemaException, type Result };

@@ -107,7 +107,7 @@ function collectFromRequest(
  * Usage in handler:
  *    handler(@AcceptInput(MySchema) input: z.infer<typeof MySchema>) {}
  */
-function RequestSchema<T extends z.ZodTypeAny>(
+export function AcceptInput<T extends z.ZodTypeAny>(
   schema: T,
   options?: AcceptInputOptions
 ): ParameterDecorator {
@@ -173,8 +173,3 @@ function RequestSchema<T extends z.ZodTypeAny>(
   // return the actual param decorator
   return decoratorFactory();
 }
-
-// Alias for RequestSchema
-export const InputData: typeof RequestSchema = RequestSchema;
-export type { AcceptInputOptions };
-export { RequestSchema };

@@ -51,7 +51,7 @@ interface ResponseSchemaOptions {
 }
 
 @Injectable()
-export class FinalizeResponseInterceptor implements NestInterceptor {
+class FinalizeResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const response = context.switchToHttp().getResponse();
 
@@ -83,7 +83,7 @@ export class FinalizeResponseInterceptor implements NestInterceptor {
  * - Before sending the response, strips any fields not defined in the schema
  * - Applies Zod default()/transform() on the output
  */
-export function ResponseSchema<T extends z.ZodTypeAny>(
+export function EnsureOutput<T extends z.ZodTypeAny>(
   schema: T,
   options?: ResponseSchemaOptions
 ): MethodDecorator {
@@ -95,6 +95,3 @@ export function ResponseSchema<T extends z.ZodTypeAny>(
     UseInterceptors(FinalizeResponseInterceptor)
   );
 }
-
-// Alias for ResponseSchema
-export const OutputData: typeof ResponseSchema = ResponseSchema;

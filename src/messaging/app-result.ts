@@ -40,7 +40,3 @@ export class AppResult {
     return { kind: "infra-error", serviceName, errorCode, message, data };
   }
 }
-
-
-
-AppResult.reject('CONFLICT', 'Unauthorized');

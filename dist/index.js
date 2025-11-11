@@ -7646,43 +7646,45 @@ function RequestSchema(schema, options) {
     coercePrimitives: options?.coercePrimitives ?? true,
     attachTo: options?.attachTo ?? null
   };
-  const decoratorFactory = createParamDecorator((_data, ctx) => {
-    const req = ctx.switchToHttp().getRequest();
-    let effective = schema;
-    if (isZodObject(schema)) {
-      effective = opts.strict ? schema.strict() : schema.loose();
-    }
-    const keys = getSchemaKeys(schema);
-    const raw = collectFromRequest(req, keys, {
-      sourceOrder: opts.sourceOrder,
-      strategy: opts.strategy,
-      coercePrimitives: opts.coercePrimitives
-    });
-    const result = effective.safeParse(raw);
-    if (!result.success) {
-      const errors = result.error.issues.map((err) => {
-        const msg = err.message.split(":").pop().trim();
-        return `${String(err.path[0])}: ${msg}`;
+  const decoratorFactory = createParamDecorator(
+    (_data, ctx) => {
+      const req = ctx.switchToHttp().getRequest();
+      let effective = schema;
+      if (isZodObject(schema)) {
+        effective = opts.strict ? schema.strict() : schema.loose();
+      }
+      const keys = getSchemaKeys(schema);
+      const raw = collectFromRequest(req, keys, {
+        sourceOrder: opts.sourceOrder,
+        strategy: opts.strategy,
+        coercePrimitives: opts.coercePrimitives
       });
-      throw new HttpException(
-        {
-          code: "VALIDATION_ERROR",
-          message: "Validation failed",
-          data: errors
-        },
-        HttpStatus.UNPROCESSABLE_ENTITY
-      );
+      const result = effective.safeParse(raw);
+      if (!result.success) {
+        const errors = result.error.issues.map((err) => {
+          const msg = err.message.split(":").pop().trim();
+          return `${String(err.path[0])}: ${msg}`;
+        });
+        throw new HttpException(
+          {
+            code: "VALIDATION_ERROR",
+            message: "Validation failed",
+            data: errors
+          },
+          HttpStatus.UNPROCESSABLE_ENTITY
+        );
+      }
+      if (opts.attachTo) {
+        req[opts.attachTo] = result.data;
+      }
+      return result.data;
     }
-    if (opts.attachTo) {
-      req[opts.attachTo] = result.data;
-    }
-    return result.data;
-  });
+  );
   return decoratorFactory();
 }
 var InputData = RequestSchema;
 
-// src/lib/response-schema.decorator.ts
+// src/messaging/response-schema.decorator.ts
 var import_operators = __toESM(require_operators());
 var ResponseSchemaException = class extends Error {
   constructor(message) {
@@ -7725,7 +7727,7 @@ var FinalizeResponseInterceptor = class {
     return next.handle().pipe(
       (0, import_operators.map)((output) => {
         let statusCode = HttpStatus.OK;
-        const isHttpResponse = output.code !== void 0 && (output.data || output.message);
+        const isHttpResponse = output && typeof output === "object" && "code" in output;
         if (isHttpResponse) {
           if (output.code === "OK") {
             statusCode = HttpStatus.OK;
@@ -7755,7 +7757,7 @@ function ResponseSchema(schema, options) {
 }
 var OutputData = ResponseSchema;
 
-// src/lib/app-result.ts
+// src/messaging/app-result.ts
 var AppResult = class {
   static ok(data) {
     return { kind: "ok", data };
@@ -7767,9 +7769,8 @@ var AppResult = class {
     return { kind: "infra-error", serviceName, errorCode, message, data };
   }
 };
-AppResult.reject("CONFLICT", "Unauthorized");
 
-// src/lib/http-result.ts
+// src/messaging/http-result.ts
 var HttpResult = class {
   static fail(code, message, data) {
     return {
@@ -7800,6 +7801,6 @@ var HttpResult = class {
   }
 };
 
-export { AppResult, HttpResult, InputData, OutputData, RequestSchema, ResponseSchema };
+export { AppResult, FinalizeResponseInterceptor, HttpResult, InputData, OutputData, RequestSchema, ResponseSchema, ResponseSchemaException };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

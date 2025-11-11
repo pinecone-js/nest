@@ -1,9 +1,11 @@
 import { z } from 'zod';
+import { NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Observable } from 'rxjs';
 
-type Source = 'params' | 'query' | 'body' | 'headers';
+type Source = "params" | "query" | "body" | "headers";
 type AcceptInputOptions = {
     sourceOrder?: Source[];
-    strategy?: 'firstWins' | 'lastWins';
+    strategy?: "firstWins" | "lastWins";
     strict?: boolean;
     coercePrimitives?: boolean;
     attachTo?: string | null;
@@ -16,8 +18,14 @@ type AcceptInputOptions = {
 declare function RequestSchema<T extends z.ZodTypeAny>(schema: T, options?: AcceptInputOptions): ParameterDecorator;
 declare const InputData: typeof RequestSchema;
 
+declare class ResponseSchemaException extends Error {
+    constructor(message: string);
+}
 interface ResponseSchemaOptions {
     strict?: boolean;
+}
+declare class FinalizeResponseInterceptor implements NestInterceptor {
+    intercept(context: ExecutionContext, next: CallHandler): Observable<any>;
 }
 /**
  * Method decorator:
@@ -64,4 +72,4 @@ declare class HttpResult {
     static fromResult<T extends unknown>(result: Result<T>, presenter?: (data: any) => any): HttpResponse<T>;
 }
 
-export { AppResult, type HttpResponse, HttpResult, InputData, OutputData, RequestSchema, ResponseSchema, type Result };
+export { type AcceptInputOptions, AppResult, FinalizeResponseInterceptor, type HttpResponse, HttpResult, InputData, OutputData, RequestSchema, ResponseSchema, ResponseSchemaException, type Result };

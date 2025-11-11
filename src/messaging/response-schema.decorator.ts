@@ -18,7 +18,7 @@ export class ResponseSchemaException extends Error {
 }
 
 @Injectable()
-class EnsureResponseInterceptor<T extends z.ZodTypeAny> {
+class EnsureResponseInterceptor<T extends z.ZodTypeAny> implements NestInterceptor {
   constructor(
     private readonly schema: T,
     private readonly opts: ResponseSchemaOptions
@@ -58,7 +58,7 @@ export class FinalizeResponseInterceptor implements NestInterceptor {
     return next.handle().pipe(
       map((output: any) => {
         let statusCode = HttpStatus.OK;
-        const isHttpResponse = output.code !== undefined && (output.data || output.message);
+        const isHttpResponse = output && typeof output === 'object' && 'code' in output;
 
         if (isHttpResponse) {
           if (output.code === "OK") {

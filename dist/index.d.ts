@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-type Source = 'params' | 'query' | 'body';
+type Source = 'params' | 'query' | 'body' | 'headers';
 type AcceptInputOptions = {
     sourceOrder?: Source[];
     strategy?: 'firstWins' | 'lastWins';

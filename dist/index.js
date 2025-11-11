@@ -7640,7 +7640,7 @@ function collectFromRequest(req, keys, opts) {
 }
 function RequestSchema(schema, options) {
   const opts = {
-    sourceOrder: options?.sourceOrder ?? ["params", "query", "body"],
+    sourceOrder: options?.sourceOrder ?? ["params", "query", "body", "headers"],
     strategy: options?.strategy ?? "firstWins",
     strict: options?.strict ?? true,
     coercePrimitives: options?.coercePrimitives ?? true,

@@ -1,14 +1,14 @@
 import { ExecutionContext, HttpException, HttpStatus, createParamDecorator } from '@nestjs/common';
 import { z, ZodError } from 'zod';
 
-type Source = 'params' | 'query' | 'body';
+type Source = 'params' | 'query' | 'body' | 'headers';
 
 export type AcceptInputOptions = {
-  sourceOrder?: Source[]; // default: ['params','query','body']
-  strategy?: 'firstWins' | 'lastWins'; // handle duplicates between sources
-  strict?: boolean; // true -> schema.strict(), false -> schema.passthrough()
-  coercePrimitives?: boolean; // convert "1"->1, "true"->true, "a,b"->['a','b'] (light)
-  attachTo?: string | null; // attach to req[attachTo]
+  sourceOrder?: Source[]; // default: ['params','query','body','headers']
+  strategy?: 'firstWins' | 'lastWins'; // handle duplicates between sources, default: 'firstWins'
+  strict?: boolean; // true -> schema.strict(), false -> schema.passthrough(), default: true
+  coercePrimitives?: boolean; // convert "1"->1, "true"->true, "a,b"->['a','b'] (light), default: true
+  attachTo?: string | null; // attach to req[attachTo], default: null
 };
 
 function isZodObject(x: z.ZodTypeAny): x is z.ZodObject<any> {
@@ -105,7 +105,7 @@ export function RequestSchema<T extends z.ZodTypeAny>(
   options?: AcceptInputOptions,
 ): ParameterDecorator {
   const opts: Required<AcceptInputOptions> = {
-    sourceOrder: options?.sourceOrder ?? ['params', 'query', 'body'],
+    sourceOrder: options?.sourceOrder ?? ['params', 'query', 'body', 'headers'],
     strategy: options?.strategy ?? 'firstWins',
     strict: options?.strict ?? true,
     coercePrimitives: options?.coercePrimitives ?? true,

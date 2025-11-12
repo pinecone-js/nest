@@ -13,7 +13,7 @@ interface Rejection {
 interface InfraError {
   kind: "infra-error";
   serviceName: string;
-  errorCode: string;
+  code: string;
   message: string;
   data?: unknown;
 }
@@ -33,10 +33,10 @@ export class AppResult {
 
   static infraError(
     serviceName: string,
-    errorCode: ErrorCode,
+    code: ErrorCode,
     message: string,
     data?: unknown
   ): Result<any> {
-    return { kind: "infra-error", serviceName, errorCode, message, data };
+    return { kind: "infra-error", serviceName, code, message, data };
   }
 }

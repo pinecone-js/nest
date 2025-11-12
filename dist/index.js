@@ -7776,8 +7776,8 @@ var AppResult = class {
   static reject(code, message, data) {
     return { kind: "reject", code, message, data };
   }
-  static infraError(serviceName, errorCode, message, data) {
-    return { kind: "infra-error", serviceName, errorCode, message, data };
+  static infraError(serviceName, code, message, data) {
+    return { kind: "infra-error", serviceName, code, message, data };
   }
 };
 

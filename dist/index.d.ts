@@ -42,7 +42,7 @@ interface Rejection {
 interface InfraError {
     kind: "infra-error";
     serviceName: string;
-    errorCode: string;
+    code: string;
     message: string;
     data?: unknown;
 }
@@ -51,7 +51,7 @@ type ErrorCode = string;
 declare class AppResult {
     static ok<T>(data: T): Result<T>;
     static reject(code: ErrorCode, message: string, data?: unknown): Result<any>;
-    static infraError(serviceName: string, errorCode: ErrorCode, message: string, data?: unknown): Result<any>;
+    static infraError(serviceName: string, code: ErrorCode, message: string, data?: unknown): Result<any>;
 }
 
 interface HttpResponse<T> {

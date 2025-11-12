@@ -29,6 +29,11 @@ function getSchemaKeys(schema: z.ZodTypeAny): string[] | null {
   return Object.keys(schema.shape);
 }
 
+/** Convert kebab-case to camelCase: "partner-code" -> "partnerCode" */
+function kebabToCamel(str: string): string {
+  return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
 /** Lightly coerce primitive from string -> number/bool; "a,b" -> ["a","b"] for simple arrays */
 function shallowCoerce(obj: Record<string, any>) {
   const out: Record<string, any> = {};
@@ -74,7 +79,18 @@ function collectFromRequest(
     Pick<AcceptInputOptions, "sourceOrder" | "strategy" | "coercePrimitives">
   >
 ) {
-  const ordered = opts.sourceOrder.map((src) => req?.[src] ?? {});
+  const ordered = opts.sourceOrder.map((src) => {
+    const srcObj = req?.[src] ?? {};
+    // Convert header keys from kebab-case to camelCase
+    if (src === "headers") {
+      const converted: Record<string, any> = {};
+      for (const [k, v] of Object.entries(srcObj)) {
+        converted[kebabToCamel(k)] = v;
+      }
+      return converted;
+    }
+    return srcObj;
+  });
   let merged: Record<string, any> = {};
 
   const apply = (srcObj: Record<string, any>, overwrite: boolean) => {

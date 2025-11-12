@@ -7586,6 +7586,9 @@ function getSchemaKeys(schema) {
   if (!isZodObject(schema)) return null;
   return Object.keys(schema.shape);
 }
+function kebabToCamel(str) {
+  return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+}
 function shallowCoerce(obj) {
   const out = {};
   for (const [k, v] of Object.entries(obj)) {
@@ -7615,7 +7618,17 @@ function shallowCoerce(obj) {
   return out;
 }
 function collectFromRequest(req, keys, opts) {
-  const ordered = opts.sourceOrder.map((src) => req?.[src] ?? {});
+  const ordered = opts.sourceOrder.map((src) => {
+    const srcObj = req?.[src] ?? {};
+    if (src === "headers") {
+      const converted = {};
+      for (const [k, v] of Object.entries(srcObj)) {
+        converted[kebabToCamel(k)] = v;
+      }
+      return converted;
+    }
+    return srcObj;
+  });
   let merged = {};
   const apply = (srcObj, overwrite) => {
     if (keys && keys.length > 0) {
@@ -7683,7 +7696,7 @@ function AcceptInput(schema, options) {
   return decoratorFactory();
 }
 
-// src/messaging/response-schema.decorator.ts
+// src/messaging/output.decorator.ts
 var import_operators = __toESM(require_operators());
 var ResponseSchemaException = class extends Error {
   constructor(message) {

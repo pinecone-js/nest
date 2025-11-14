@@ -7878,7 +7878,7 @@ var SendOutput = class {
 
 // src/index.ts
 var Pinecone = class {
-  static config(configs) {
+  static configure(configs) {
     for (const [key, value] of Object.entries(configs)) {
       setConfig(key, value);
     }

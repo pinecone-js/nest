@@ -7876,9 +7876,11 @@ var SendOutput = class {
   static report(error) {
     if (error) {
       const code = "code" in error ? error.code : "UNKNOWN_ERROR";
+      const data = JSON.stringify("data" in error ? error.data : {});
       const message = [
         `USECASE ERR: ${error.message}`,
         `CODE: ${code}`,
+        `DATA: ${data}`,
         `STACK: ${error instanceof Error ? error.stack?.toString() : ""}`
       ].join(" | ");
       logger3.error(message);

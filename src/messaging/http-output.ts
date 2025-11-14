@@ -5,7 +5,7 @@ import { rescue } from "../helpers/rescue";
 
 const logger = new Logger("Pinecone/SendResp");
 
-export interface Output<T> {
+export type Output<T> = {
   success: boolean;
   code: string;
   data: T | null;

@@ -6,7 +6,7 @@ export * from "./messaging/app-message";
 export * from "./messaging/http-output";
 
 export class Pinecone {
-  static config(configs: Record<ConfigKey, any>): void {
+  static configure(configs: Record<ConfigKey, any>): void {
     for (const [key, value] of Object.entries(configs)) {
       setConfig(key as ConfigKey, value);
     }

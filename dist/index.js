@@ -7593,6 +7593,9 @@ function setConfig(key, value) {
 function getConfig(key, defaultValue) {
   return config[key] ?? defaultValue;
 }
+function addHook(key, handler) {
+  hooks[key]?.push(handler);
+}
 function getConfigs() {
   return config;
 }
@@ -7894,7 +7897,7 @@ var Pinecone = class {
     }
   }
   static hook(key, callback) {
-    setConfig(key, callback);
+    addHook(key, callback);
   }
   static getConfigs() {
     return getConfigs();

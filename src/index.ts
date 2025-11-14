@@ -1,4 +1,4 @@
-import { ConfigKey, getConfigs, setConfig } from "./config";
+import { addHook, ConfigKey, getConfigs, HookKey, setConfig } from "./config";
 
 export * from "./messaging/input.decorator";
 export * from "./messaging/output.decorator";
@@ -12,8 +12,8 @@ export class Pinecone {
     }
   }
 
-  static hook(key: ConfigKey, callback: (...args: any[]) => void): void {
-    setConfig(key, callback);
+  static hook(key: HookKey, callback: (...args: any[]) => void): void {
+    addHook(key, callback);
   }
 
   static getConfigs(): Record<ConfigKey, any> {

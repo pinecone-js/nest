@@ -22,7 +22,7 @@ export function getConfig<T>(key: ConfigKey, defaultValue?: T): T {
   return (config[key] ?? defaultValue) as T;
 }
 
-export function hook(key: HookKey, handler: HookHandler): void {
+export function addHook(key: HookKey, handler: HookHandler): void {
   hooks[key]?.push(handler);
 }
 

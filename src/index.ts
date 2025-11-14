@@ -12,6 +12,10 @@ export class Pinecone {
     }
   }
 
+  static hook(key: ConfigKey, callback: (...args: any[]) => void): void {
+    setConfig(key, callback);
+  }
+
   static getConfigs(): Record<ConfigKey, any> {
     return getConfigs();
   }

@@ -1,6 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { InfraError, Message } from "./app-message";
-import { getConfig } from "../config";
+import { getHandlers } from "../config";
 import { rescue } from "../helpers/rescue";
 
 const logger = new Logger("Pinecone/SendResp");
@@ -10,7 +10,7 @@ export type Output<T> = {
   code: string;
   data: T | null;
   message: string;
-}
+};
 
 export class SendOutput {
   static fail<T>(
@@ -91,13 +91,9 @@ export class SendOutput {
 
       logger.error(message);
 
-      const hook = getConfig<((error: Error | InfraError) => void) | null>(
-        "hook.output.report"
+      getHandlers("output.report").forEach((handler) =>
+        rescue(() => handler(error))
       );
-
-      if (hook) {
-        rescue(() => hook(error));
-      }
     }
   }
 }

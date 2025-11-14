@@ -7582,8 +7582,10 @@ var require_operators = __commonJS({
 
 // src/config.ts
 var config = {
-  debug: false,
-  "hook.output.report": null
+  debug: false
+};
+var hooks = {
+  "output.report": []
 };
 function setConfig(key, value) {
   config[key] = value;
@@ -7593,6 +7595,9 @@ function getConfig(key, defaultValue) {
 }
 function getConfigs() {
   return config;
+}
+function getHandlers(key) {
+  return hooks[key] ?? [];
 }
 var logger = new Logger("Pinecone/AcceptInput");
 function isZodObject(x) {
@@ -7874,12 +7879,9 @@ var SendOutput = class {
         `STACK: ${error instanceof Error ? error.stack?.toString() : ""}`
       ].join(" | ");
       logger3.error(message);
-      const hook = getConfig(
-        "hook.output.report"
+      getHandlers("output.report").forEach(
+        (handler) => rescue(() => handler(error))
       );
-      if (hook) {
-        rescue(() => hook(error));
-      }
     }
   }
 };
@@ -7890,6 +7892,9 @@ var Pinecone = class {
     for (const [key, value] of Object.entries(configs)) {
       setConfig(key, value);
     }
+  }
+  static hook(key, callback) {
+    setConfig(key, callback);
   }
   static getConfigs() {
     return getConfigs();

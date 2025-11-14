@@ -2,9 +2,11 @@ import {
   ExecutionContext,
   HttpException,
   HttpStatus,
+  Logger,
   createParamDecorator,
 } from "@nestjs/common";
 import { z } from "zod";
+import { getConfig } from "../config";
 
 type Source = "params" | "query" | "body" | "headers";
 
@@ -15,6 +17,8 @@ type AcceptInputOptions = {
   coercePrimitives?: boolean; // convert "1"->1, "true"->true, "a,b"->['a','b'] (light), default: true
   attachTo?: string | null; // attach to req[attachTo], default: null
 };
+
+const logger = new Logger("Pinecone/AcceptInput");
 
 function isZodObject(x: z.ZodTypeAny): x is z.ZodObject<any> {
   return x && (x as any)._def?.typeName === "ZodObject";
@@ -156,6 +160,10 @@ export function AcceptInput<T extends z.ZodTypeAny>(
         strategy: opts.strategy,
         coercePrimitives: opts.coercePrimitives,
       });
+
+      if (getConfig<boolean>("debug", false)) {
+        logger.debug("Collected input: ", JSON.stringify(raw));
+      }
 
       // Validate + transform/default with Zod
       const result = (effective as T).safeParse(raw);

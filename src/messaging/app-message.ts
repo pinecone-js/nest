@@ -12,31 +12,29 @@ interface Rejection {
 
 interface InfraError {
   kind: "infra-error";
-  serviceName: string;
+  service: string;
   code: string;
   message: string;
   data?: unknown;
 }
 
-export type Result<T> = Ok<T> | Rejection | InfraError;
+export type Message<T> = Ok<T> | Rejection | InfraError;
 
-type ErrorCode = string;
-
-export class AppResult {
-  static ok<T>(data: T): Result<T> {
+export class ReturnMessage {
+  static ok<T>(data: T): Message<T> {
     return { kind: "ok", data };
   }
 
-  static reject(code: ErrorCode, message: string, data?: unknown): Result<any> {
+  static reject(code: string, message: string, data?: unknown): Message<any> {
     return { kind: "reject", code, message, data };
   }
 
   static infraError(
-    serviceName: string,
-    code: ErrorCode,
+    service: string,
+    code: string,
     message: string,
     data?: unknown
-  ): Result<any> {
-    return { kind: "infra-error", serviceName, code, message, data };
+  ): Message<any> {
+    return { kind: "infra-error", service, code, message, data };
   }
 }

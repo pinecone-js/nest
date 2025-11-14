@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   HttpStatus,
   Injectable,
+  Logger,
   NestInterceptor,
   UseInterceptors,
   applyDecorators,
@@ -10,18 +11,23 @@ import {
 import { Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import { z } from "zod";
+import { getConfig } from "../config";
 
-export class ResponseSchemaException extends Error {
+const logger = new Logger("Pinecone/EnsureOutput");
+
+class OutputSchemaException extends Error {
   constructor(message: string) {
     super(message);
   }
 }
 
 @Injectable()
-class EnsureResponseInterceptor<T extends z.ZodTypeAny> implements NestInterceptor {
+class EnsureOutputInterceptor<T extends z.ZodTypeAny>
+  implements NestInterceptor
+{
   constructor(
     private readonly schema: T,
-    private readonly opts: ResponseSchemaOptions
+    private readonly opts: OutputSchemaOptions
   ) {}
 
   intercept(_ctx: ExecutionContext, next: CallHandler): Observable<any> {
@@ -39,26 +45,30 @@ class EnsureResponseInterceptor<T extends z.ZodTypeAny> implements NestIntercept
 
           return output;
         } catch (error: any) {
-          throw new ResponseSchemaException(error.message);
+          if (getConfig<boolean>("debug", false)) {
+            logger.debug("Captured output: " + JSON.stringify(output));
+          }
+          throw new OutputSchemaException(error.message);
         }
       })
     );
   }
 }
 
-interface ResponseSchemaOptions {
+interface OutputSchemaOptions {
   strict?: boolean;
 }
 
 @Injectable()
-class FinalizeResponseInterceptor implements NestInterceptor {
+class FinalizeOutputInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const response = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
       map((output: any) => {
         let statusCode = HttpStatus.OK;
-        const isHttpResponse = output && typeof output === 'object' && 'code' in output;
+        const isHttpResponse =
+          output && typeof output === "object" && "code" in output;
 
         if (isHttpResponse) {
           if (output.code === "OK") {
@@ -85,13 +95,13 @@ class FinalizeResponseInterceptor implements NestInterceptor {
  */
 export function EnsureOutput<T extends z.ZodTypeAny>(
   schema: T,
-  options?: ResponseSchemaOptions
+  options?: OutputSchemaOptions
 ): MethodDecorator {
-  const opts: Required<ResponseSchemaOptions> = {
+  const opts: Required<OutputSchemaOptions> = {
     strict: options?.strict ?? false,
   };
   return applyDecorators(
-    UseInterceptors(new EnsureResponseInterceptor(schema, opts)),
-    UseInterceptors(FinalizeResponseInterceptor)
+    UseInterceptors(new EnsureOutputInterceptor(schema, opts)),
+    UseInterceptors(FinalizeOutputInterceptor)
   );
 }

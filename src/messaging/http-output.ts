@@ -62,6 +62,15 @@ export class SendOutput {
     }
   }
 
+  static async from<T>(callback: () => Promise<T>): Promise<Output<T>> {
+    try {
+      return this.success(await callback());
+    } catch (error: any) {
+      this.report(error);
+      return this.unhandledError<T>(error.data);
+    }
+  }
+
   private static unhandledError<T>(data?: T) {
     return this.fail(
       "INTERNAL_ERROR",

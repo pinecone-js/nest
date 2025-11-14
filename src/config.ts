@@ -15,6 +15,6 @@ export function getConfig<T>(key: ConfigKey, defaultValue?: T): T {
   return (config[key] ?? defaultValue) as T;
 }
 
-export function getCurrentConfig(): Record<ConfigKey, any> {
+export function getConfigs(): Record<ConfigKey, any> {
   return config;
 }

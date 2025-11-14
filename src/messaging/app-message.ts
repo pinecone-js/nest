@@ -10,7 +10,7 @@ interface Rejection {
   data?: unknown;
 }
 
-interface InfraError {
+export interface InfraError {
   kind: "infra-error";
   service: string;
   code: string;

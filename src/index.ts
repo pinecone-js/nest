@@ -1,4 +1,4 @@
-import { ConfigKey, getCurrentConfig, setConfig } from "./config";
+import { ConfigKey, getConfigs, setConfig } from "./config";
 
 export * from "./messaging/input.decorator";
 export * from "./messaging/output.decorator";
@@ -12,7 +12,7 @@ export class Pinecone {
     }
   }
 
-  static getCurrentConfig(): Record<ConfigKey, any> {
-    return getCurrentConfig();
+  static getConfigs(): Record<ConfigKey, any> {
+    return getConfigs();
   }
 }

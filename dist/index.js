@@ -7850,6 +7850,14 @@ var SendOutput = class {
       return this.unhandledError(error.data);
     }
   }
+  static async from(callback) {
+    try {
+      return this.success(await callback());
+    } catch (error) {
+      this.report(error);
+      return this.unhandledError(error.data);
+    }
+  }
   static unhandledError(data) {
     return this.fail(
       "INTERNAL_ERROR",

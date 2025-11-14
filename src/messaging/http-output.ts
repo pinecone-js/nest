@@ -5,14 +5,14 @@ import { rescue } from "../helpers/rescue";
 
 const logger = new Logger("Pinecone/SendResp");
 
-export interface ApiOutput<T> {
+export interface Output<T> {
   code: string;
   data?: T;
   message?: string;
 }
 
 export class SendOutput {
-  static fail<T>(code: string, message?: string, data?: T): ApiOutput<T> {
+  static fail<T>(code: string, message?: string, data?: T): Output<T> {
     return {
       code,
       message,
@@ -20,7 +20,7 @@ export class SendOutput {
     };
   }
 
-  static success<T>(data: T): ApiOutput<T> {
+  static success<T>(data: T): Output<T> {
     return {
       code: "OK",
       data,
@@ -30,7 +30,7 @@ export class SendOutput {
   static fromMessage<T extends unknown>(
     result: Message<T>,
     presenter?: (data: any) => any
-  ): ApiOutput<T> {
+  ): Output<T> {
     switch (result.kind) {
       case "ok":
         return this.success(presenter ? presenter(result.data) : result.data);
@@ -77,7 +77,7 @@ export class SendOutput {
 
   static async fromUsecase<T>(
     work: Promise<Message<T>>
-  ): Promise<ApiOutput<T>> {
+  ): Promise<Output<T>> {
     try {
       const result = await work;
 

@@ -7591,7 +7591,7 @@ function setConfig(key, value) {
 function getConfig(key, defaultValue) {
   return config[key] ?? defaultValue;
 }
-function getCurrentConfig() {
+function getConfigs() {
   return config;
 }
 var logger = new Logger("Pinecone/AcceptInput");
@@ -7815,8 +7815,9 @@ function rescue(fn) {
 // src/messaging/http-output.ts
 var logger3 = new Logger("Pinecone/SendResp");
 var SendOutput = class {
-  static fail(code, message, data) {
+  static fail(code, message = "", data = null) {
     return {
+      success: false,
       code,
       message,
       data
@@ -7824,8 +7825,10 @@ var SendOutput = class {
   }
   static success(data) {
     return {
+      success: true,
+      data,
       code: "OK",
-      data
+      message: ""
     };
   }
   static fromMessage(result, presenter) {
@@ -7835,20 +7838,32 @@ var SendOutput = class {
       case "reject":
         return this.fail(result.code, result.message, result.data);
       case "infra-error":
-        return this.fail(
-          "INTERNAL_ERROR",
-          "Something went wrong while processing your request. Our team's been notified, but feel free to contact support if this keeps happening.",
-          result.data
-        );
+        this.report(result);
+        return this.unhandledError(result.data);
     }
+  }
+  static async fromUsecase(usecase) {
+    try {
+      return this.fromMessage(await usecase);
+    } catch (error) {
+      this.report(error);
+      return this.unhandledError(error.data);
+    }
+  }
+  static unhandledError(data) {
+    return this.fail(
+      "INTERNAL_ERROR",
+      "Something went wrong while processing your request. Our team's been notified, but feel free to contact support if this keeps happening.",
+      data
+    );
   }
   static report(error) {
     if (error) {
       const message = [
-        `USECASE ERROR`,
+        `USECASE ERR: ${error.message}`,
         `INPUT: {}`,
         `RESULT: {}`,
-        `STACK: ${error?.stack?.toString()}`
+        `STACK: ${error instanceof Error ? error.stack?.toString() : ""}`
       ].join(" | ");
       logger3.error(message);
       const hook = getConfig(
@@ -7857,21 +7872,6 @@ var SendOutput = class {
       if (hook) {
         rescue(() => hook(error));
       }
-      if (getConfig("debug", false)) {
-        logger3.debug("Captured error: " + JSON.stringify(error));
-      }
-    }
-  }
-  static async fromUsecase(work) {
-    try {
-      const result = await work;
-      return this.fromMessage(result);
-    } catch (error) {
-      this.report(error);
-      return this.fail(
-        "INTERNAL_ERROR",
-        "Something went wrong while processing your request. Our team's been notified, but feel free to contact support if this keeps happening."
-      );
     }
   }
 };
@@ -7883,8 +7883,8 @@ var Pinecone = class {
       setConfig(key, value);
     }
   }
-  static getCurrentConfig() {
-    return getCurrentConfig();
+  static getConfigs() {
+    return getConfigs();
   }
 };
 

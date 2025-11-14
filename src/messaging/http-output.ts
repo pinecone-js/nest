@@ -82,10 +82,10 @@ export class SendOutput {
 
   private static report(error: Error | InfraError) {
     if (error) {
+      const code = 'code' in error ? error.code : 'UNKNOWN_ERROR';
       const message = [
         `USECASE ERR: ${error.message}`,
-        `INPUT: {}`,
-        `RESULT: {}`,
+        `CODE: ${code}`,
         `STACK: ${error instanceof Error ? error.stack?.toString() : ""}`,
       ].join(" | ");
 

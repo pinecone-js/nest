@@ -1,6 +1,6 @@
 const configKeys = ["debug", "hook.output.report"] as const;
 
-type ConfigKey = (typeof configKeys)[number];
+export type ConfigKey = (typeof configKeys)[number];
 
 const config: Record<ConfigKey, any> = {
   debug: false,

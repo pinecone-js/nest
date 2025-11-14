@@ -1,4 +1,4 @@
-import { Injectable, createParamDecorator, HttpException, HttpStatus, applyDecorators, UseInterceptors } from '@nestjs/common';
+import { Logger, Injectable, createParamDecorator, HttpException, HttpStatus, applyDecorators, UseInterceptors } from '@nestjs/common';
 
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -3453,11 +3453,11 @@ var require_connect = __commonJS({
         return new Subject_1.Subject();
       }
     };
-    function connect(selector, config) {
-      if (config === void 0) {
-        config = DEFAULT_CONFIG;
+    function connect(selector, config2) {
+      if (config2 === void 0) {
+        config2 = DEFAULT_CONFIG;
       }
-      var connector = config.connector;
+      var connector = config2.connector;
       return lift_1.operate(function(source, subscriber) {
         var subject = connector();
         innerFrom_1.innerFrom(selector(fromSubscribable_1.fromSubscribable(subject))).subscribe(subscriber);
@@ -5559,15 +5559,15 @@ var require_retry = __commonJS({
       if (configOrCount === void 0) {
         configOrCount = Infinity;
       }
-      var config;
+      var config2;
       if (configOrCount && typeof configOrCount === "object") {
-        config = configOrCount;
+        config2 = configOrCount;
       } else {
-        config = {
+        config2 = {
           count: configOrCount
         };
       }
-      var _a = config.count, count = _a === void 0 ? Infinity : _a, delay = config.delay, _b = config.resetOnSuccess, resetOnSuccess = _b === void 0 ? false : _b;
+      var _a = config2.count, count = _a === void 0 ? Infinity : _a, delay = config2.delay, _b = config2.resetOnSuccess, resetOnSuccess = _b === void 0 ? false : _b;
       return count <= 0 ? identity_1.identity : lift_1.operate(function(source, subscriber) {
         var soFar = 0;
         var innerSub;
@@ -6314,9 +6314,9 @@ var require_throttle = __commonJS({
     var lift_1 = require_lift();
     var OperatorSubscriber_1 = require_OperatorSubscriber();
     var innerFrom_1 = require_innerFrom();
-    function throttle(durationSelector, config) {
+    function throttle(durationSelector, config2) {
       return lift_1.operate(function(source, subscriber) {
-        var _a = config !== null && config !== void 0 ? config : {}, _b = _a.leading, leading = _b === void 0 ? true : _b, _c = _a.trailing, trailing = _c === void 0 ? false : _c;
+        var _a = config2 !== null && config2 !== void 0 ? config2 : {}, _b = _a.leading, leading = _b === void 0 ? true : _b, _c = _a.trailing, trailing = _c === void 0 ? false : _c;
         var hasValue = false;
         var sendValue = null;
         var throttled = null;
@@ -6367,14 +6367,14 @@ var require_throttleTime = __commonJS({
     var async_1 = require_async();
     var throttle_1 = require_throttle();
     var timer_1 = require_timer();
-    function throttleTime(duration, scheduler, config) {
+    function throttleTime(duration, scheduler, config2) {
       if (scheduler === void 0) {
         scheduler = async_1.asyncScheduler;
       }
       var duration$ = timer_1.timer(duration, scheduler);
       return throttle_1.throttle(function() {
         return duration$;
-      }, config);
+      }, config2);
     }
     exports$1.throttleTime = throttleTime;
   }
@@ -6437,8 +6437,8 @@ var require_timeout = __commonJS({
         this.info = info;
       };
     });
-    function timeout(config, schedulerArg) {
-      var _a = isDate_1.isValidDate(config) ? { first: config } : typeof config === "number" ? { each: config } : config, first = _a.first, each = _a.each, _b = _a.with, _with = _b === void 0 ? timeoutErrorFactory : _b, _c = _a.scheduler, scheduler = _c === void 0 ? schedulerArg !== null && schedulerArg !== void 0 ? schedulerArg : async_1.asyncScheduler : _c, _d = _a.meta, meta = _d === void 0 ? null : _d;
+    function timeout(config2, schedulerArg) {
+      var _a = isDate_1.isValidDate(config2) ? { first: config2 } : typeof config2 === "number" ? { each: config2 } : config2, first = _a.first, each = _a.each, _b = _a.with, _with = _b === void 0 ? timeoutErrorFactory : _b, _c = _a.scheduler, scheduler = _c === void 0 ? schedulerArg !== null && schedulerArg !== void 0 ? schedulerArg : async_1.asyncScheduler : _c, _d = _a.meta, meta = _d === void 0 ? null : _d;
       if (first == null && each == null) {
         throw new TypeError("No timeout provided.");
       }
@@ -7579,6 +7579,22 @@ var require_operators = __commonJS({
     } });
   }
 });
+
+// src/config.ts
+var config = {
+  debug: false,
+  "hook.output.report": null
+};
+function setConfig(key, value) {
+  config[key] = value;
+}
+function getConfig(key, defaultValue) {
+  return config[key] ?? defaultValue;
+}
+function getCurrentConfig() {
+  return config;
+}
+var logger = new Logger("Pinecone/AcceptInput");
 function isZodObject(x) {
   return x && x._def?.typeName === "ZodObject";
 }
@@ -7672,6 +7688,9 @@ function AcceptInput(schema, options) {
         strategy: opts.strategy,
         coercePrimitives: opts.coercePrimitives
       });
+      if (getConfig("debug", false)) {
+        logger.debug("Collected input: ", JSON.stringify(raw));
+      }
       const result = effective.safeParse(raw);
       if (!result.success) {
         const errors = result.error.issues.map((err) => {
@@ -7698,14 +7717,15 @@ function AcceptInput(schema, options) {
 
 // src/messaging/output.decorator.ts
 var import_operators = __toESM(require_operators());
-var ResponseSchemaException = class extends Error {
+var logger2 = new Logger("Pinecone/EnsureOutput");
+var OutputSchemaException = class extends Error {
   constructor(message) {
     super(message);
   }
 };
-var _EnsureResponseInterceptor_decorators, _init;
-_EnsureResponseInterceptor_decorators = [Injectable()];
-var EnsureResponseInterceptor = class {
+var _EnsureOutputInterceptor_decorators, _init;
+_EnsureOutputInterceptor_decorators = [Injectable()];
+var EnsureOutputInterceptor = class {
   constructor(schema, opts) {
     this.schema = schema;
     this.opts = opts;
@@ -7722,18 +7742,21 @@ var EnsureResponseInterceptor = class {
           }
           return output;
         } catch (error) {
-          throw new ResponseSchemaException(error.message);
+          if (getConfig("debug", false)) {
+            logger2.debug("Captured output: " + JSON.stringify(output));
+          }
+          throw new OutputSchemaException(error.message);
         }
       })
     );
   }
 };
 _init = __decoratorStart();
-EnsureResponseInterceptor = __decorateElement(_init, 0, "EnsureResponseInterceptor", _EnsureResponseInterceptor_decorators, EnsureResponseInterceptor);
-__runInitializers(_init, 1, EnsureResponseInterceptor);
-var _FinalizeResponseInterceptor_decorators, _init2;
-_FinalizeResponseInterceptor_decorators = [Injectable()];
-var FinalizeResponseInterceptor = class {
+EnsureOutputInterceptor = __decorateElement(_init, 0, "EnsureOutputInterceptor", _EnsureOutputInterceptor_decorators, EnsureOutputInterceptor);
+__runInitializers(_init, 1, EnsureOutputInterceptor);
+var _FinalizeOutputInterceptor_decorators, _init2;
+_FinalizeOutputInterceptor_decorators = [Injectable()];
+var FinalizeOutputInterceptor = class {
   intercept(context, next) {
     const response = context.switchToHttp().getResponse();
     return next.handle().pipe(
@@ -7756,33 +7779,42 @@ var FinalizeResponseInterceptor = class {
   }
 };
 _init2 = __decoratorStart();
-FinalizeResponseInterceptor = __decorateElement(_init2, 0, "FinalizeResponseInterceptor", _FinalizeResponseInterceptor_decorators, FinalizeResponseInterceptor);
-__runInitializers(_init2, 1, FinalizeResponseInterceptor);
+FinalizeOutputInterceptor = __decorateElement(_init2, 0, "FinalizeOutputInterceptor", _FinalizeOutputInterceptor_decorators, FinalizeOutputInterceptor);
+__runInitializers(_init2, 1, FinalizeOutputInterceptor);
 function EnsureOutput(schema, options) {
   const opts = {
     strict: options?.strict ?? false
   };
   return applyDecorators(
-    UseInterceptors(new EnsureResponseInterceptor(schema, opts)),
-    UseInterceptors(FinalizeResponseInterceptor)
+    UseInterceptors(new EnsureOutputInterceptor(schema, opts)),
+    UseInterceptors(FinalizeOutputInterceptor)
   );
 }
 
-// src/messaging/app-result.ts
-var AppResult = class {
+// src/messaging/app-message.ts
+var ReturnMessage = class {
   static ok(data) {
     return { kind: "ok", data };
   }
   static reject(code, message, data) {
     return { kind: "reject", code, message, data };
   }
-  static infraError(serviceName, code, message, data) {
-    return { kind: "infra-error", serviceName, code, message, data };
+  static infraError(service, code, message, data) {
+    return { kind: "infra-error", service, code, message, data };
   }
 };
 
-// src/messaging/http-result.ts
-var HttpResult = class {
+// src/helpers/rescue.ts
+function rescue(fn) {
+  try {
+    fn();
+  } catch (error) {
+  }
+}
+
+// src/messaging/http-output.ts
+var logger3 = new Logger("Pinecone/SendResp");
+var SendOutput = class {
   static fail(code, message, data) {
     return {
       code,
@@ -7796,7 +7828,7 @@ var HttpResult = class {
       data
     };
   }
-  static fromResult(result, presenter) {
+  static fromMessage(result, presenter) {
     switch (result.kind) {
       case "ok":
         return this.success(presenter ? presenter(result.data) : result.data);
@@ -7810,8 +7842,52 @@ var HttpResult = class {
         );
     }
   }
+  static report(error) {
+    if (error) {
+      const message = [
+        `USECASE ERROR`,
+        `INPUT: {}`,
+        `RESULT: {}`,
+        `STACK: ${error?.stack?.toString()}`
+      ].join(" | ");
+      logger3.error(message);
+      const hook = getConfig(
+        "hook.output.report"
+      );
+      if (hook) {
+        rescue(() => hook(error));
+      }
+      if (getConfig("debug", false)) {
+        logger3.debug("Captured error: " + JSON.stringify(error));
+      }
+    }
+  }
+  static async fromUsecase(work) {
+    try {
+      const result = await work;
+      return this.fromMessage(result);
+    } catch (error) {
+      this.report(error);
+      return this.fail(
+        "INTERNAL_ERROR",
+        "Something went wrong while processing your request. Our team's been notified, but feel free to contact support if this keeps happening."
+      );
+    }
+  }
 };
 
-export { AcceptInput, AppResult, EnsureOutput, HttpResult, ResponseSchemaException };
+// src/index.ts
+var Pinecone = class {
+  static config(configs) {
+    for (const [key, value] of Object.entries(configs)) {
+      setConfig(key, value);
+    }
+  }
+  static getCurrentConfig() {
+    return getCurrentConfig();
+  }
+};
+
+export { AcceptInput, EnsureOutput, Pinecone, ReturnMessage, SendOutput };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

@@ -7820,6 +7820,61 @@ function rescue(fn) {
   }
 }
 
+// src/helpers/error-helper.ts
+var ErrorHelper = class {
+  static formatStack(error) {
+    const trace = error.stack?.toString() || "";
+    const lines = trace.split("\n");
+    let errorMessage = "";
+    const rows = [];
+    for (const line of lines) {
+      if (line.includes("(node:") || line.includes("node_modules")) {
+        continue;
+      }
+      const cleanedLine = line.replace(/^\s+at\s+/, "");
+      const match = cleanedLine.match(/^(.+?)\s+\(([^)]+):(\d+):(\d+)\)$/);
+      if (!match) {
+        if (cleanedLine.trim() && !errorMessage && !rows.length) {
+          errorMessage = cleanedLine.trim();
+        }
+        continue;
+      }
+      const symbol = match[1];
+      const filePath = match[2];
+      const lineNum = match[3];
+      const column = match[4];
+      const pathParts = filePath.split("/");
+      const fileName = pathParts[pathParts.length - 1];
+      rows.push({
+        lineColumn: `${lineNum}:${column}`,
+        fileName,
+        symbol
+      });
+    }
+    const formattedRows = [];
+    if (errorMessage) {
+      formattedRows.push(errorMessage);
+    }
+    if (rows.length === 0) {
+      return formattedRows.join("\n");
+    }
+    const maxLineColumnWidth = Math.max(
+      ...rows.map((r) => r.lineColumn.length)
+    );
+    const maxFileNameWidth = Math.max(...rows.map((r) => r.fileName.length));
+    const maxSymbolWidth = Math.max(...rows.map((r) => r.symbol.length));
+    for (const row of rows) {
+      const formattedRow = [
+        row.lineColumn.padEnd(maxLineColumnWidth),
+        row.fileName.padEnd(maxFileNameWidth),
+        row.symbol.padEnd(maxSymbolWidth)
+      ].join(" ");
+      formattedRows.push(formattedRow);
+    }
+    return formattedRows.join("\n");
+  }
+};
+
 // src/messaging/http-output.ts
 var logger3 = new Logger("Pinecone/SendResp");
 var SendOutput = class {
@@ -7881,62 +7936,13 @@ var SendOutput = class {
         `USECASE ERR: ${error.message}`,
         `CODE: ${code}`,
         `DATA: ${data}`,
-        `STACK: ${error instanceof Error ? this.formatErrorStack(error) : ""}`
+        `STACK: ${error instanceof Error ? ErrorHelper.formatStack(error) : ""}`
       ].join(" | ");
       logger3.error(message);
       getHandlers("output.report").forEach(
         (handler) => rescue(() => handler(error))
       );
     }
-  }
-  static formatErrorStack(error) {
-    const trace = error.stack?.toString() || "";
-    const lines = trace.split("\n");
-    let errorMessage = "";
-    const rows = [];
-    for (const line of lines) {
-      if (line.includes("(node:") || line.includes("node_modules")) {
-        continue;
-      }
-      const cleanedLine = line.replace(/^\s+at\s+/, "");
-      const match = cleanedLine.match(/^(.+?)\s+\(([^)]+):(\d+):(\d+)\)$/);
-      if (!match) {
-        if (cleanedLine.trim() && !errorMessage && !rows.length) {
-          errorMessage = cleanedLine.trim();
-        }
-        continue;
-      }
-      const symbol = match[1];
-      const filePath = match[2];
-      const lineNum = match[3];
-      const column = match[4];
-      const pathParts = filePath.split("/");
-      const fileName = pathParts[pathParts.length - 1];
-      rows.push({
-        lineColumn: `${lineNum}:${column}`,
-        fileName,
-        symbol
-      });
-    }
-    const formattedRows = [];
-    if (errorMessage) {
-      formattedRows.push(errorMessage);
-    }
-    if (rows.length === 0) {
-      return formattedRows.join("\n");
-    }
-    const maxLineColumnWidth = Math.max(...rows.map((r) => r.lineColumn.length));
-    const maxFileNameWidth = Math.max(...rows.map((r) => r.fileName.length));
-    const maxSymbolWidth = Math.max(...rows.map((r) => r.symbol.length));
-    for (const row of rows) {
-      const formattedRow = [
-        row.lineColumn.padEnd(maxLineColumnWidth),
-        row.fileName.padEnd(maxFileNameWidth),
-        row.symbol.padEnd(maxSymbolWidth)
-      ].join(" ");
-      formattedRows.push(formattedRow);
-    }
-    return formattedRows.join("\n");
   }
 };
 
@@ -7955,6 +7961,6 @@ var Pinecone = class {
   }
 };
 
-export { AcceptInput, EnsureOutput, Pinecone, ReturnMessage, SendOutput };
+export { AcceptInput, EnsureOutput, ErrorHelper, Pinecone, ReturnMessage, SendOutput };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

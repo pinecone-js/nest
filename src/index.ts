@@ -4,6 +4,7 @@ export * from "./messaging/input.decorator";
 export * from "./messaging/output.decorator";
 export * from "./messaging/app-message";
 export * from "./messaging/http-output";
+export * from "./helpers/error-helper";
 
 export class Pinecone {
   static configure(configs: Partial<Record<ConfigKey, any>>): void {

@@ -7822,8 +7822,13 @@ function rescue(fn) {
 
 // src/helpers/error-helper.ts
 var ErrorHelper = class {
+  static getData(error) {
+    const data = "response" in error && "data" in error.response ? error.response.data : {};
+    return JSON.stringify(data);
+  }
   static formatStack(error) {
     const trace = error.stack?.toString() || "";
+    const data = this.getData(error);
     const lines = trace.split("\n");
     let errorMessage = "";
     const rows = [];
@@ -7858,6 +7863,7 @@ var ErrorHelper = class {
     if (rows.length === 0) {
       return formattedRows.join("\n");
     }
+    formattedRows.push(`DATA: ${data}`);
     const maxLineColumnWidth = Math.max(
       ...rows.map((r) => r.lineColumn.length)
     );

@@ -1,7 +1,18 @@
 export class ErrorHelper {
+  static getData(error: any): string {
+    const data =
+      "response" in error && "data" in error.response
+        ? error.response.data
+        : {};
+
+    return JSON.stringify(data);
+  }
+
   static formatStack(error: Error): string {
     const trace = error.stack?.toString() || "";
+    const data = this.getData(error);
     const lines = trace.split("\n");
+    
     let errorMessage = "";
     const rows: Array<{
       lineColumn: string;
@@ -55,6 +66,8 @@ export class ErrorHelper {
     if (rows.length === 0) {
       return formattedRows.join("\n");
     }
+
+    formattedRows.push(`DATA: ${data}`);
 
     // Calculate maximum width of each column
     const maxLineColumnWidth = Math.max(

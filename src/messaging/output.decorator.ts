@@ -11,7 +11,7 @@ import {
 import { Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import { z } from "zod";
-import { getConfig } from "../config";
+import { getSetting } from "../settings";
 
 const logger = new Logger("Pinecone/EnsureOutput");
 
@@ -45,7 +45,7 @@ class EnsureOutputInterceptor<T extends z.ZodTypeAny>
 
           return output;
         } catch (error: any) {
-          if (getConfig<boolean>("debug", false)) {
+          if (getSetting<boolean>("debug", false)) {
             logger.debug("Captured output: " + JSON.stringify(output));
           }
           throw new OutputSchemaException(error.message);

@@ -1,6 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { InfraError, Message } from "./app-message";
-import { getHandlers } from "../config";
+import { getHandlers, getSetting } from "../settings";
 import { rescue } from "../helpers/rescue";
 import { ErrorHelper } from "../helpers/error-helper";
 
@@ -11,10 +11,14 @@ export interface Output<T> {
   code: string;
   data: T | null;
   message: string;
-};
+}
 
 export interface Usecase<T> {
   execute(...args: unknown[]): Promise<Message<T>>;
+}
+
+export interface UsecaseErrorReporter {
+  (error: Error | InfraError, formattedError: string): void;
 }
 
 export class SendOutput {
@@ -55,7 +59,10 @@ export class SendOutput {
     }
   }
 
-  static async fromUsecase<T>(usecase: Usecase<T>, ...args: unknown[]): Promise<Output<T>> {
+  static async fromUsecase<T>(
+    usecase: Usecase<T>,
+    ...args: unknown[]
+  ): Promise<Output<T>> {
     const start = new Date();
     let exception: Error | null = null;
     let output: Output<T> | null = null;
@@ -82,7 +89,8 @@ export class SendOutput {
 
     /**
      * When there is an error catched by try/catch.
-     * This is unwanted case, or a bug in the code. It should be report to the Admin, and return an default error response.
+     * This is unwanted case, or a bug in the code. It should be report to the Admin,
+     * and return an default error response.
      */
     if (exception) {
       this.reportError(exception);
@@ -112,10 +120,16 @@ export class SendOutput {
         }`,
       ].join(" | ");
 
-      logger.error(message);
+      const handlers = getHandlers("usecase.error.report");
 
-      getHandlers("usecase.error.report").forEach((handler) =>
-        rescue(() => handler(error))
+      // If no handlers are registered, log the error to the console.
+      if (handlers.length === 0) {
+        logger.error(message);
+      }
+
+      // If handlers are registered, hand over the error to the handlers.
+      handlers.forEach((handler: UsecaseErrorReporter) =>
+        rescue(() => handler(error, message))
       );
     }
   }
@@ -124,9 +138,13 @@ export class SendOutput {
     ucName: string;
     input: Record<string, any>;
     output: Output<T> | null;
-    exception: Error | null;
+    exception: Error | string | null;
     duration: number;
   }) {
+    if (getSetting("logExceptionAsString", false)) {
+      props.exception = ErrorHelper.formatStack(props.exception as Error);
+    }
+
     getHandlers("usecase.logging").forEach((handler) =>
       rescue(() => handler(props))
     );

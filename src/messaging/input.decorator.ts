@@ -6,7 +6,7 @@ import {
   createParamDecorator,
 } from "@nestjs/common";
 import { z } from "zod";
-import { getConfig } from "../config";
+import { getSetting } from "../settings";
 
 type Source = "params" | "query" | "body" | "headers";
 
@@ -161,7 +161,7 @@ export function AcceptInput<T extends z.ZodTypeAny>(
         coercePrimitives: opts.coercePrimitives,
       });
 
-      if (getConfig<boolean>("debug", false)) {
+      if (getSetting<boolean>("debug", false)) {
         logger.debug("Collected input: ", JSON.stringify(raw));
       }
 

@@ -7922,7 +7922,7 @@ var SendOutput = class {
     try {
       output = this.fromMessage(await usecase.execute(...args));
     } catch (error) {
-      error = error;
+      exception = error;
     }
     const duration = (/* @__PURE__ */ new Date()).getTime() - start.getTime();
     this.logUcExecution({
@@ -7933,6 +7933,9 @@ var SendOutput = class {
       duration
     });
     if (output) return output;
+    if (exception) {
+      this.reportError(exception);
+    }
     return this.unhandledError();
   }
   static unhandledError(data) {

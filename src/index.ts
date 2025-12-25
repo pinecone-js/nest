@@ -2,10 +2,10 @@ import {
   addHandler,
   ConfigKey,
   getConfigs,
-  RegisterKey,
   setConfig,
 } from "./config";
 import { InfraError } from "./messaging/app-message";
+import { Output } from "./messaging/http-output";
 
 export * from "./messaging/input.decorator";
 export * from "./messaging/output.decorator";
@@ -27,9 +27,9 @@ export class Pinecone {
   static addLogger(
     callback: (props: {
       ucName: string;
-      input: Record<string, any>;
-      output: Record<string, any> | null;
-      error: Error | InfraError | null;
+      input: unknown[];
+      output: Output<any> | null;
+      exception: Error | null;
       duration: number;
     }) => void
   ): void {

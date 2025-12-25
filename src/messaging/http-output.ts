@@ -57,7 +57,7 @@ export class SendOutput {
 
   static async fromUsecase<T>(usecase: Usecase<T>, ...args: unknown[]): Promise<Output<T>> {
     const start = new Date();
-    let error: Error | InfraError | null = null;
+    let exception: Error | null = null;
     let output: Output<T> | null = null;
     const ucName = usecase.constructor.name;
     const input = args;
@@ -74,7 +74,7 @@ export class SendOutput {
       ucName,
       input,
       output,
-      error,
+      exception,
       duration,
     });
 
@@ -84,8 +84,8 @@ export class SendOutput {
      * When there is an error catched by try/catch.
      * This is unwanted case, or a bug in the code. It should be report to the Admin, and return an default error response.
      */
-    if (error) {
-      this.reportError(error);
+    if (exception) {
+      this.reportError(exception);
     }
     return this.unhandledError<T>();
   }
@@ -120,11 +120,11 @@ export class SendOutput {
     }
   }
 
-  private static logUcExecution(props: {
+  private static logUcExecution<T>(props: {
     ucName: string;
     input: Record<string, any>;
-    output: Record<string, any> | null;
-    error: Error | InfraError | null;
+    output: Output<T> | null;
+    exception: Error | null;
     duration: number;
   }) {
     getHandlers("usecase.logging").forEach((handler) =>

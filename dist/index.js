@@ -7913,14 +7913,14 @@ var SendOutput = class {
         return this.unhandledError(result.data);
     }
   }
-  static async fromUsecase(usecase) {
+  static async fromUsecase(usecase, ...args) {
     const start = /* @__PURE__ */ new Date();
     let error = null;
     let output = null;
     const ucName = usecase.constructor.name;
-    const input = usecase.input;
+    const input = args;
     try {
-      output = this.fromMessage(await usecase);
+      output = this.fromMessage(await usecase.execute(...args));
     } catch (error2) {
       error2 = error2;
     }

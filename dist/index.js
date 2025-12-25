@@ -3453,11 +3453,11 @@ var require_connect = __commonJS({
         return new Subject_1.Subject();
       }
     };
-    function connect(selector, config2) {
-      if (config2 === void 0) {
-        config2 = DEFAULT_CONFIG;
+    function connect(selector, config) {
+      if (config === void 0) {
+        config = DEFAULT_CONFIG;
       }
-      var connector = config2.connector;
+      var connector = config.connector;
       return lift_1.operate(function(source, subscriber) {
         var subject = connector();
         innerFrom_1.innerFrom(selector(fromSubscribable_1.fromSubscribable(subject))).subscribe(subscriber);
@@ -5559,15 +5559,15 @@ var require_retry = __commonJS({
       if (configOrCount === void 0) {
         configOrCount = Infinity;
       }
-      var config2;
+      var config;
       if (configOrCount && typeof configOrCount === "object") {
-        config2 = configOrCount;
+        config = configOrCount;
       } else {
-        config2 = {
+        config = {
           count: configOrCount
         };
       }
-      var _a = config2.count, count = _a === void 0 ? Infinity : _a, delay = config2.delay, _b = config2.resetOnSuccess, resetOnSuccess = _b === void 0 ? false : _b;
+      var _a = config.count, count = _a === void 0 ? Infinity : _a, delay = config.delay, _b = config.resetOnSuccess, resetOnSuccess = _b === void 0 ? false : _b;
       return count <= 0 ? identity_1.identity : lift_1.operate(function(source, subscriber) {
         var soFar = 0;
         var innerSub;
@@ -6314,9 +6314,9 @@ var require_throttle = __commonJS({
     var lift_1 = require_lift();
     var OperatorSubscriber_1 = require_OperatorSubscriber();
     var innerFrom_1 = require_innerFrom();
-    function throttle(durationSelector, config2) {
+    function throttle(durationSelector, config) {
       return lift_1.operate(function(source, subscriber) {
-        var _a = config2 !== null && config2 !== void 0 ? config2 : {}, _b = _a.leading, leading = _b === void 0 ? true : _b, _c = _a.trailing, trailing = _c === void 0 ? false : _c;
+        var _a = config !== null && config !== void 0 ? config : {}, _b = _a.leading, leading = _b === void 0 ? true : _b, _c = _a.trailing, trailing = _c === void 0 ? false : _c;
         var hasValue = false;
         var sendValue = null;
         var throttled = null;
@@ -6367,14 +6367,14 @@ var require_throttleTime = __commonJS({
     var async_1 = require_async();
     var throttle_1 = require_throttle();
     var timer_1 = require_timer();
-    function throttleTime(duration, scheduler, config2) {
+    function throttleTime(duration, scheduler, config) {
       if (scheduler === void 0) {
         scheduler = async_1.asyncScheduler;
       }
       var duration$ = timer_1.timer(duration, scheduler);
       return throttle_1.throttle(function() {
         return duration$;
-      }, config2);
+      }, config);
     }
     exports$1.throttleTime = throttleTime;
   }
@@ -6437,8 +6437,8 @@ var require_timeout = __commonJS({
         this.info = info;
       };
     });
-    function timeout(config2, schedulerArg) {
-      var _a = isDate_1.isValidDate(config2) ? { first: config2 } : typeof config2 === "number" ? { each: config2 } : config2, first = _a.first, each = _a.each, _b = _a.with, _with = _b === void 0 ? timeoutErrorFactory : _b, _c = _a.scheduler, scheduler = _c === void 0 ? schedulerArg !== null && schedulerArg !== void 0 ? schedulerArg : async_1.asyncScheduler : _c, _d = _a.meta, meta = _d === void 0 ? null : _d;
+    function timeout(config, schedulerArg) {
+      var _a = isDate_1.isValidDate(config) ? { first: config } : typeof config === "number" ? { each: config } : config, first = _a.first, each = _a.each, _b = _a.with, _with = _b === void 0 ? timeoutErrorFactory : _b, _c = _a.scheduler, scheduler = _c === void 0 ? schedulerArg !== null && schedulerArg !== void 0 ? schedulerArg : async_1.asyncScheduler : _c, _d = _a.meta, meta = _d === void 0 ? null : _d;
       if (first == null && each == null) {
         throw new TypeError("No timeout provided.");
       }
@@ -7580,26 +7580,27 @@ var require_operators = __commonJS({
   }
 });
 
-// src/config.ts
-var config = {
-  debug: false
+// src/settings.ts
+var settings = {
+  debug: false,
+  logExceptionAsString: false
 };
 var register = {
   "usecase.error.report": [],
   "usecase.logging": []
 };
-function setConfig(key, value) {
-  config[key] = value;
+function setSetting(key, value) {
+  settings[key] = value;
 }
-function getConfig(key, defaultValue) {
-  return config[key] ?? defaultValue;
+function getSetting(key, defaultValue) {
+  return settings[key] ?? defaultValue;
+}
+function getSettings() {
+  return settings;
 }
 function addHandler(key, handler) {
   if (!register[key]) register[key] = [];
   register[key].push(handler);
-}
-function getConfigs() {
-  return config;
 }
 function getHandlers(key) {
   return register[key] ?? [];
@@ -7698,7 +7699,7 @@ function AcceptInput(schema, options) {
         strategy: opts.strategy,
         coercePrimitives: opts.coercePrimitives
       });
-      if (getConfig("debug", false)) {
+      if (getSetting("debug", false)) {
         logger.debug("Collected input: ", JSON.stringify(raw));
       }
       const result = effective.safeParse(raw);
@@ -7752,7 +7753,7 @@ var EnsureOutputInterceptor = class {
           }
           return output;
         } catch (error) {
-          if (getConfig("debug", false)) {
+          if (getSetting("debug", false)) {
             logger2.debug("Captured output: " + JSON.stringify(output));
           }
           throw new OutputSchemaException(error.message);
@@ -7955,13 +7956,19 @@ var SendOutput = class {
         `DATA: ${data}`,
         `STACK: ${error instanceof Error ? ErrorHelper.formatStack(error) : ""}`
       ].join(" | ");
-      logger3.error(message);
-      getHandlers("usecase.error.report").forEach(
-        (handler) => rescue(() => handler(error))
+      const handlers = getHandlers("usecase.error.report");
+      if (handlers.length === 0) {
+        logger3.error(message);
+      }
+      handlers.forEach(
+        (handler) => rescue(() => handler(error, message))
       );
     }
   }
   static logUcExecution(props) {
+    if (getSetting("logExceptionAsString", false)) {
+      props.exception = ErrorHelper.formatStack(props.exception);
+    }
     getHandlers("usecase.logging").forEach(
       (handler) => rescue(() => handler(props))
     );
@@ -7970,19 +7977,37 @@ var SendOutput = class {
 
 // src/index.ts
 var Pinecone = class {
+  /**
+   * Configure the Pinecone framework. This api use for master.
+   * @param configs - The configurations to be set.
+   */
   static configure(configs) {
     for (const [key, value] of Object.entries(configs)) {
-      setConfig(key, value);
+      setSetting(key, value);
     }
   }
+  /**
+   * Add a usecase error reporter to the Pinecone framework.
+   * @param callback - The callback function to be called when a usecase error is reported.
+   */
   static onUsecaseError(callback) {
     addHandler("usecase.error.report", callback);
   }
+  /**
+   * Add a logger to the Pinecone framework.
+   * @param callback - The callback function to be called when a usecase is executed.
+   */
   static addLogger(callback) {
     addHandler("usecase.logging", callback);
   }
-  static getConfigs() {
-    return getConfigs();
+  static logExceptionAsString() {
+    setSetting("logExceptionAsString", true);
+  }
+  /**
+   * Get the current settings of the Pinecone framework.
+   */
+  static getSettings() {
+    return getSettings();
   }
 };
 

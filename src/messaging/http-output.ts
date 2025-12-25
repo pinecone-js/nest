@@ -141,7 +141,7 @@ export class SendOutput {
     exception: Error | string | null;
     duration: number;
   }) {
-    if (getSetting("logExceptionAsString", false)) {
+    if (props.exception && getSetting("logExceptionAsString", false)) {
       props.exception = ErrorHelper.formatStack(props.exception as Error);
     }
 

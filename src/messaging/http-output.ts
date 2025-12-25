@@ -45,6 +45,7 @@ export class SendOutput {
   }
 
   private static fromMessage<T extends unknown>(
+    usecase: string,
     result: Message<T>,
     presenter?: (data: any) => T
   ): Output<T> {
@@ -54,7 +55,7 @@ export class SendOutput {
       case "reject":
         return this.fail<T>(result.code, result.message, result.data as T);
       case "infra-error":
-        this.reportError(result);
+        this.reportError(usecase, result);
         return this.unhandledError<T>(result.data as T);
     }
   }
@@ -70,7 +71,7 @@ export class SendOutput {
     const input = args;
 
     try {
-      output = this.fromMessage(await usecase.execute(...args));
+      output = this.fromMessage(ucName, await usecase.execute(...args));
     } catch (error: any) {
       exception = error as Error;
     }
@@ -93,7 +94,7 @@ export class SendOutput {
      * and return an default error response.
      */
     if (exception) {
-      this.reportError(exception);
+      this.reportError(ucName, exception);
     }
     return this.unhandledError<T>();
   }
@@ -107,12 +108,15 @@ export class SendOutput {
     );
   }
 
-  private static reportError(error: Error | InfraError) {
+  private static reportError(usecase: string, error: Error | InfraError) {
     if (error) {
       const code = "code" in error ? error.code : "UNKNOWN_ERROR";
+      const service = "service" in error ? error.service : "UNKNOWN_SERVICE";
       const data = JSON.stringify("data" in error ? error.data : {});
       const message = [
-        `USECASE ERR: ${error.message}`,
+        `UC_ERR: ${usecase}`,
+        `MSG: ${error.message}`,
+        `SRV: ${service}`,
         `CODE: ${code}`,
         `DATA: ${data}`,
         `STACK: ${

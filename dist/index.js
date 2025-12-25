@@ -7966,7 +7966,7 @@ var SendOutput = class {
     }
   }
   static logUcExecution(props) {
-    if (getSetting("logExceptionAsString", false)) {
+    if (props.exception && getSetting("logExceptionAsString", false)) {
       props.exception = ErrorHelper.formatStack(props.exception);
     }
     getHandlers("usecase.logging").forEach(

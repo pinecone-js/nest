@@ -7584,8 +7584,9 @@ var require_operators = __commonJS({
 var config = {
   debug: false
 };
-var hooks = {
-  "output.report": []
+var register = {
+  "usecase.error.report": [],
+  "usecase.logging": []
 };
 function setConfig(key, value) {
   config[key] = value;
@@ -7593,14 +7594,15 @@ function setConfig(key, value) {
 function getConfig(key, defaultValue) {
   return config[key] ?? defaultValue;
 }
-function addHook(key, handler) {
-  hooks[key]?.push(handler);
+function addHandler(key, handler) {
+  if (!register[key]) register[key] = [];
+  register[key].push(handler);
 }
 function getConfigs() {
   return config;
 }
 function getHandlers(key) {
-  return hooks[key] ?? [];
+  return register[key] ?? [];
 }
 var logger = new Logger("Pinecone/AcceptInput");
 function isZodObject(x) {
@@ -7907,25 +7909,31 @@ var SendOutput = class {
       case "reject":
         return this.fail(result.code, result.message, result.data);
       case "infra-error":
-        this.report(result);
+        this.reportError(result);
         return this.unhandledError(result.data);
     }
   }
   static async fromUsecase(usecase) {
+    const start = /* @__PURE__ */ new Date();
+    let error = null;
+    let output = null;
+    const ucName = usecase.constructor.name;
+    const input = usecase.input;
     try {
-      return this.fromMessage(await usecase);
-    } catch (error) {
-      this.report(error);
-      return this.unhandledError(error.data);
+      output = this.fromMessage(await usecase);
+    } catch (error2) {
+      error2 = error2;
     }
-  }
-  static async from(callback) {
-    try {
-      return this.success(await callback());
-    } catch (error) {
-      this.report(error);
-      return this.unhandledError(error.data);
-    }
+    const duration = (/* @__PURE__ */ new Date()).getTime() - start.getTime();
+    this.logUcExecution({
+      ucName,
+      input,
+      output,
+      error,
+      duration
+    });
+    if (output) return output;
+    return this.unhandledError();
   }
   static unhandledError(data) {
     return this.fail(
@@ -7934,7 +7942,7 @@ var SendOutput = class {
       data
     );
   }
-  static report(error) {
+  static reportError(error) {
     if (error) {
       const code = "code" in error ? error.code : "UNKNOWN_ERROR";
       const data = JSON.stringify("data" in error ? error.data : {});
@@ -7945,10 +7953,15 @@ var SendOutput = class {
         `STACK: ${error instanceof Error ? ErrorHelper.formatStack(error) : ""}`
       ].join(" | ");
       logger3.error(message);
-      getHandlers("output.report").forEach(
+      getHandlers("usecase.error.report").forEach(
         (handler) => rescue(() => handler(error))
       );
     }
+  }
+  static logUcExecution(props) {
+    getHandlers("usecase.logging").forEach(
+      (handler) => rescue(() => handler(props))
+    );
   }
 };
 
@@ -7959,8 +7972,11 @@ var Pinecone = class {
       setConfig(key, value);
     }
   }
-  static hook(key, callback) {
-    addHook(key, callback);
+  static onUsecaseError(callback) {
+    addHandler("usecase.error.report", callback);
+  }
+  static addLogger(callback) {
+    addHandler("usecase.logging", callback);
   }
   static getConfigs() {
     return getConfigs();

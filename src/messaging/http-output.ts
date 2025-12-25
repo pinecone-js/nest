@@ -6,12 +6,16 @@ import { ErrorHelper } from "../helpers/error-helper";
 
 const logger = new Logger("Pinecone/SendResp");
 
-export type Output<T> = {
+export interface Output<T> {
   success: boolean;
   code: string;
   data: T | null;
   message: string;
 };
+
+export interface Usecase<T> {
+  execute(...args: unknown[]): Promise<Message<T>>;
+}
 
 export class SendOutput {
   static fail<T>(
@@ -51,17 +55,15 @@ export class SendOutput {
     }
   }
 
-  static async fromUsecase<T>(
-    usecase: Promise<Message<T>>
-  ): Promise<Output<T>> {
+  static async fromUsecase<T>(usecase: Usecase<T>, ...args: unknown[]): Promise<Output<T>> {
     const start = new Date();
     let error: Error | InfraError | null = null;
     let output: Output<T> | null = null;
     const ucName = usecase.constructor.name;
-    const input = (usecase as any).input;
+    const input = args;
 
     try {
-      output = this.fromMessage(await usecase);
+      output = this.fromMessage(await usecase.execute(...args));
     } catch (error: any) {
       error = error as Error;
     }

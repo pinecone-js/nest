@@ -65,7 +65,7 @@ export class SendOutput {
     try {
       output = this.fromMessage(await usecase.execute(...args));
     } catch (error: any) {
-      error = error as Error;
+      exception = error as Error;
     }
 
     // Send the log to the system.

@@ -7915,21 +7915,21 @@ var SendOutput = class {
   }
   static async fromUsecase(usecase, ...args) {
     const start = /* @__PURE__ */ new Date();
-    let error = null;
+    let exception = null;
     let output = null;
     const ucName = usecase.constructor.name;
     const input = args;
     try {
       output = this.fromMessage(await usecase.execute(...args));
-    } catch (error2) {
-      error2 = error2;
+    } catch (error) {
+      error = error;
     }
     const duration = (/* @__PURE__ */ new Date()).getTime() - start.getTime();
     this.logUcExecution({
       ucName,
       input,
       output,
-      error,
+      exception,
       duration
     });
     if (output) return output;

@@ -1,4 +1,11 @@
-import { addHook, ConfigKey, getConfigs, HookKey, setConfig } from "./config";
+import {
+  addHandler,
+  ConfigKey,
+  getConfigs,
+  RegisterKey,
+  setConfig,
+} from "./config";
+import { InfraError } from "./messaging/app-message";
 
 export * from "./messaging/input.decorator";
 export * from "./messaging/output.decorator";
@@ -13,8 +20,20 @@ export class Pinecone {
     }
   }
 
-  static hook(key: HookKey, callback: (...args: any[]) => void): void {
-    addHook(key, callback);
+  static onUsecaseError(callback: (error: Error | InfraError) => void): void {
+    addHandler("usecase.error.report", callback);
+  }
+
+  static addLogger(
+    callback: (props: {
+      ucName: string;
+      input: Record<string, any>;
+      output: Record<string, any> | null;
+      error: Error | InfraError | null;
+      duration: number;
+    }) => void
+  ): void {
+    addHandler("usecase.logging", callback);
   }
 
   static getConfigs(): Record<ConfigKey, any> {

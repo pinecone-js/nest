@@ -36,7 +36,7 @@ export class SendOutput {
     };
   }
 
-  static fromMessage<T extends unknown>(
+  private static fromMessage<T extends unknown>(
     result: Message<T>,
     presenter?: (data: any) => T
   ): Output<T> {
@@ -46,8 +46,7 @@ export class SendOutput {
       case "reject":
         return this.fail<T>(result.code, result.message, result.data as T);
       case "infra-error":
-        this.report(result);
-
+        this.reportError(result);
         return this.unhandledError<T>(result.data as T);
     }
   }
@@ -55,21 +54,38 @@ export class SendOutput {
   static async fromUsecase<T>(
     usecase: Promise<Message<T>>
   ): Promise<Output<T>> {
-    try {
-      return this.fromMessage(await usecase);
-    } catch (error: any) {
-      this.report(error);
-      return this.unhandledError<T>(error.data);
-    }
-  }
+    const start = new Date();
+    let error: Error | InfraError | null = null;
+    let output: Output<T> | null = null;
+    const ucName = usecase.constructor.name;
+    const input = (usecase as any).input;
 
-  static async from<T>(callback: () => Promise<T>): Promise<Output<T>> {
     try {
-      return this.success(await callback());
+      output = this.fromMessage(await usecase);
     } catch (error: any) {
-      this.report(error);
-      return this.unhandledError<T>(error.data);
+      error = error as Error;
     }
+
+    // Send the log to the system.
+    const duration = new Date().getTime() - start.getTime();
+    this.logUcExecution({
+      ucName,
+      input,
+      output,
+      error,
+      duration,
+    });
+
+    if (output) return output;
+
+    /**
+     * When there is an error catched by try/catch.
+     * This is unwanted case, or a bug in the code. It should be report to the Admin, and return an default error response.
+     */
+    if (error) {
+      this.reportError(error);
+    }
+    return this.unhandledError<T>();
   }
 
   private static unhandledError<T>(data?: T) {
@@ -81,7 +97,7 @@ export class SendOutput {
     );
   }
 
-  private static report(error: Error | InfraError) {
+  private static reportError(error: Error | InfraError) {
     if (error) {
       const code = "code" in error ? error.code : "UNKNOWN_ERROR";
       const data = JSON.stringify("data" in error ? error.data : {});
@@ -96,9 +112,21 @@ export class SendOutput {
 
       logger.error(message);
 
-      getHandlers("output.report").forEach((handler) =>
+      getHandlers("usecase.error.report").forEach((handler) =>
         rescue(() => handler(error))
       );
     }
+  }
+
+  private static logUcExecution(props: {
+    ucName: string;
+    input: Record<string, any>;
+    output: Record<string, any> | null;
+    error: Error | InfraError | null;
+    duration: number;
+  }) {
+    getHandlers("usecase.logging").forEach((handler) =>
+      rescue(() => handler(props))
+    );
   }
 }
